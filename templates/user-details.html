@@ -9,5 +9,14 @@
     <input type="submit" value="Edit" class="btn btn-primary">
     <input type="submit" value="Delete" formaction="/users/{{user.id}}/delete" formmethod="POST" class="btn btn-danger">
 </form>
-<a href="/users">Back</a>
+<h2>Posts</h2>
+<ul>
+    {% for post in posts %}
+    <li><a href="/posts/{{post.id}}">{{post.title}}</a></li>
+    {% endfor %}
+</ul>
+<form action="/users/{{user.id}}/posts/new" method="GET">
+    <input type="submit" value="Add Post" class="btn btn-primary">
+</form>
+<a href="/users">All Users</a>
 {% endblock %}
