@@ -23,6 +23,7 @@ class User(db.Model):
     last_name = db.Column(db.String(50), nullable=False)
     image_url = db.Column(db.String, default='/static/default.jpg')
 
+    posts = db.relationship("Post", backref="user", cascade="all, delete-orphan")
 
 class Post(db.Model):
     """User."""
@@ -35,4 +36,4 @@ class Post(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.now())
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
 
-    user = db.relationship('User', backref='posts')
+    # user = db.relationship('User', backref='posts')

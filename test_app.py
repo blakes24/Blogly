@@ -1,7 +1,7 @@
 from unittest import TestCase
 
 from app import app
-from models import db, User
+from models import db, User, Post
 
 # Use test database and don't clutter tests with SQL
 app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql:///blogly_test'
@@ -17,19 +17,26 @@ db.drop_all()
 db.create_all()
 
 
-class PetViewsTestCase(TestCase):
-    """Tests for views for Pets."""
+class BloglyViewsTestCase(TestCase):
+    """Tests for views for blogly."""
 
     def setUp(self):
-        """Add sample pet."""
+        """Add sample user."""
 
-        User.query.delete()
+        # Post.query.delete()
+        # User.query.delete()
 
         user = User(first_name="Test", last_name="User")
+        post = Post(title="Testing", content="Is this working?", user_id=1)
+
         db.session.add(user)
         db.session.commit()
 
+        db.session.add(post)
+        db.session.commit()
+
         self.user_id = user.id
+        self.post_id = post.id
 
     def tearDown(self):
         """Clean up any fouled transaction."""
@@ -68,3 +75,28 @@ class PetViewsTestCase(TestCase):
 
             self.assertEqual(resp.status_code, 200)
             self.assertIn("<h1>Test User</h1>", html)
+
+    def test_new_post_form(self):
+        with app.test_client() as client:
+            resp = client.get(f"/users/{self.user_id}/posts/new")
+            html = resp.get_data(as_text=True)
+
+            self.assertEqual(resp.status_code, 200)
+            self.assertIn('<h1>Add Post for Test User</h1>', html)
+
+    def test_show_post(self):
+        with app.test_client() as client:
+            resp = client.get(f"/posts/{self.post_id}")
+            html = resp.get_data(as_text=True)
+
+            self.assertEqual(resp.status_code, 200)
+            self.assertIn('<h1>Testing</h1>', html)
+
+    def test_add_post(self):
+        with app.test_client() as client:
+            post = {"title": "Checking", "content": "please work", "user_id": self.user_id}
+            resp = client.post(f"/users/{self.user_id}/posts/new", data=post, follow_redirects=True)
+            html = resp.get_data(as_text=True)
+
+            self.assertEqual(resp.status_code, 200)
+            self.assertIn("Checking</a></li>", html)
