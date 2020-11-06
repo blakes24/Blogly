@@ -18,5 +18,5 @@
     <input type="submit" value="Delete" formaction="/posts/{{post.id}}/delete" formmethod="POST" class="btn btn-danger">
 </form>
 
-<a href="/users">All Users</a>
+<a href="/users/{{post.user.id}}">Back</a>
 {% endblock %}
