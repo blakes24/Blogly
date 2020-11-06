@@ -1,7 +1,7 @@
 from unittest import TestCase
 
 from app import app
-from models import db, User, Post
+from models import db, User, Post, Tag, PostTag
 
 # Use test database and don't clutter tests with SQL
 app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql:///blogly_test'
@@ -22,21 +22,28 @@ class BloglyViewsTestCase(TestCase):
 
     def setUp(self):
         """Add sample user."""
-
-        # Post.query.delete()
-        # User.query.delete()
+        PostTag.query.delete()
+        Tag.query.delete()
+        Post.query.delete()
+        User.query.delete()
 
         user = User(first_name="Test", last_name="User")
-        post = Post(title="Testing", content="Is this working?", user_id=1)
-
         db.session.add(user)
         db.session.commit()
 
-        db.session.add(post)
+        post = Post(title="Testing", content="Is this working?")
+        tag1 = Tag(name="tag1")
+
+        post.tags.append(tag1)
+        user.posts.append(post)
+
+        db.session.add(tag1)
+        db.session.add(user)
         db.session.commit()
 
         self.user_id = user.id
         self.post_id = post.id
+        self.tag_id = tag1.id
 
     def tearDown(self):
         """Clean up any fouled transaction."""
@@ -76,6 +83,14 @@ class BloglyViewsTestCase(TestCase):
             self.assertEqual(resp.status_code, 200)
             self.assertIn("<h1>Test User</h1>", html)
 
+    def test_delete_user(self):
+        with app.test_client() as client:
+            resp = client.post(f"/users/{self.user_id}/delete", follow_redirects=True)
+            html = resp.get_data(as_text=True)
+
+            self.assertEqual(resp.status_code, 200)
+            self.assertNotIn("Test User", html)
+
     def test_new_post_form(self):
         with app.test_client() as client:
             resp = client.get(f"/users/{self.user_id}/posts/new")
@@ -100,3 +115,60 @@ class BloglyViewsTestCase(TestCase):
 
             self.assertEqual(resp.status_code, 200)
             self.assertIn("Checking</a></li>", html)
+
+    def test_delete_post(self):
+        with app.test_client() as client:
+            resp = client.post(f"/posts/{self.post_id}/delete", follow_redirects=True)
+            html = resp.get_data(as_text=True)
+
+            self.assertEqual(resp.status_code, 200)
+            self.assertNotIn("Testing</a></li>", html)
+
+    def test_home(self):
+        with app.test_client() as client:
+            resp = client.get("/")
+            html = resp.get_data(as_text=True)
+
+            self.assertEqual(resp.status_code, 200)
+            self.assertIn('<h2>Testing</h2>', html)
+
+    def test_list_tags(self):
+        with app.test_client() as client:
+            resp = client.get("/tags")
+            html = resp.get_data(as_text=True)
+
+            self.assertEqual(resp.status_code, 200)
+            self.assertIn('tag1</a></li>', html)
+
+    def test_show_tag(self):
+        with app.test_client() as client:
+            resp = client.get(f"/tags/{self.tag_id}")
+            html = resp.get_data(as_text=True)
+
+            self.assertEqual(resp.status_code, 200)
+            self.assertIn('<h1>tag1</h1>', html)
+
+    def test_new_tag_form(self):
+        with app.test_client() as client:
+            resp = client.get("/tags/new")
+            html = resp.get_data(as_text=True)
+
+            self.assertEqual(resp.status_code, 200)
+            self.assertIn('<h1>Create a Tag</h1>', html)
+
+    def test_add_tag(self):
+        with app.test_client() as client:
+            tag = {"name": "tag2"}
+            resp = client.post("/tags/new", data=tag, follow_redirects=True)
+            html = resp.get_data(as_text=True)
+
+            self.assertEqual(resp.status_code, 200)
+            self.assertIn("tag2</a></li>", html)
+
+    def test_delete_tag(self):
+        with app.test_client() as client:
+            resp = client.post(f"/tags/{self.tag_id}/delete", follow_redirects=True)
+            html = resp.get_data(as_text=True)
+
+            self.assertEqual(resp.status_code, 200)
+            self.assertNotIn("tag1</a></li>", html)

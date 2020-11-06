@@ -166,8 +166,8 @@ def edit_post(post_id):
 @app.route("/posts/<int:post_id>/delete", methods=["POST"])
 def delete_post(post_id):
     """Deletes a user and redirects to user list."""
-    post = Post.query.get_or_404(post_id)
-    Post.query.filter_by(id=post_id).delete()
+    post = Post.query.get(post_id)
+    db.session.delete(post)
     db.session.commit()
     return redirect(f"/users/{post.user_id}")
 
@@ -226,9 +226,8 @@ def edit_tag(tag_id):
 
 @app.route("/tags/<int:tag_id>/delete", methods=["POST"])
 def delete_tag(tag_id):
-    """Deletes a tag and redirects to tag list."""
-
-    tag = Tag.query.get_or_404(tag_id)
-    Tag.query.filter_by(id=tag_id).delete()
+    """Deletes a tag and redirects to tag list."""    
+    tag = Tag.query.get(tag_id)
+    db.session.delete(tag)
     db.session.commit()
     return redirect("/tags")
