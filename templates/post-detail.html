@@ -6,6 +6,13 @@
 <h1>{{post.title}}</h1>
 <p>{{post.content}}</p>
 <p><i>By {{user.first_name}} {{user.last_name}}</i> {{post.created_at.strftime("%a %b %d %Y, %l:%M %p")}}</p>
+
+<p><b>Tags:</b>
+    {% for tag in tags %}
+    <span class="badge badge-primary">{{tag.name}}</span>
+    {% endfor %}
+</p>
+
 <form action="/posts/{{post.id}}/edit">
     <input type="submit" value="Edit" class="btn btn-primary">
     <input type="submit" value="Delete" formaction="/posts/{{post.id}}/delete" formmethod="POST" class="btn btn-danger">
